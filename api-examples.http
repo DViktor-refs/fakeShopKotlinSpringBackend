@@ -1,0 +1,148 @@
+### Info / végpontlista
+GET http://localhost:8080/
+
+### ---------- BELÉPTETÉS (JWT) ----------
+
+### Bejelentkezés -> token kérése
+# @name login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "pass1"
+}
+
+### A fenti válaszból a token automatikusan ebbe a változóba kerül:
+@token = {{login.response.body.token}}
+
+### A bejelentkezett felhasználó (token szükséges)
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{token}}
+
+### ---------- LEKÉRDEZÉS (nyilvános) ----------
+
+### Összes termék (alapból 30, lapozva)
+GET http://localhost:8080/api/products
+
+### Keresés
+GET http://localhost:8080/api/products?q=lipstick
+
+### Szűrés + rendezés
+GET http://localhost:8080/api/products?category=beauty&minRating=4&sortBy=price&order=desc
+
+### Ár- és készletszűrés, lapozás
+GET http://localhost:8080/api/products?minPrice=10&maxPrice=100&inStock=true&limit=10&skip=0
+
+### Címke szerinti szűrés
+GET http://localhost:8080/api/products?tag=perfumes
+
+### Kategóriák
+GET http://localhost:8080/api/products/categories
+
+### Egy termék
+GET http://localhost:8080/api/products/1
+
+### ---------- MÓDOSÍTÁS (token szükséges) ----------
+
+### Szerkeszthető mezők módosítása (csak price, discountPercentage, rating, stock)
+PATCH http://localhost:8080/api/products/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 12.49,
+  "discountPercentage": 5.0,
+  "rating": 4.1,
+  "stock": 120
+}
+
+### Egy termék véleményei (nyilvános)
+GET http://localhost:8080/api/products/1/reviews
+
+### Új vélemény hozzáadása (token szükséges)
+POST http://localhost:8080/api/products/1/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Nagyon jó termék!",
+  "reviewerName": "Teszt Elek",
+  "reviewerEmail": "teszt.elek@example.com"
+}
+
+### ---------- KOSÁR (token szükséges) ----------
+
+### Kosár megtekintése
+GET http://localhost:8080/api/cart
+Authorization: Bearer {{token}}
+
+### Termék hozzáadása a kosárhoz
+POST http://localhost:8080/api/cart/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### Kosártétel mennyiségének módosítása
+PUT http://localhost:8080/api/cart/items/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+### Termék eltávolítása a kosárból
+DELETE http://localhost:8080/api/cart/items/1
+Authorization: Bearer {{token}}
+
+### ---------- RENDELÉS (token szükséges) ----------
+
+### Pénztár: kosárból rendelés (a készlet levonódik)
+POST http://localhost:8080/api/orders/checkout
+Authorization: Bearer {{token}}
+
+### Saját rendelések listája
+GET http://localhost:8080/api/orders
+Authorization: Bearer {{token}}
+
+### Egy saját rendelés
+GET http://localhost:8080/api/orders/1
+Authorization: Bearer {{token}}
+
+### Rendelés lemondása (készlet visszaíródik)
+POST http://localhost:8080/api/orders/1/cancel
+Authorization: Bearer {{token}}
+
+### ADMIN: rendelés állapotának módosítása
+### (előbb user1 / pass1 belépéssel kérj admin tokent!)
+PATCH http://localhost:8080/api/orders/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "SHIPPED"
+}
+
+### ---------- FIZETÉS – BARION (token szükséges) ----------
+
+### Fizetés indítása egy saját rendeléshez -> gatewayUrl-re irányítsd a vásárlót
+POST http://localhost:8080/api/orders/1/pay
+Authorization: Bearer {{token}}
+
+### Kézi állapot-frissítés (ha nem akarsz a callback-re várni)
+POST http://localhost:8080/api/orders/1/payment/refresh
+Authorization: Bearer {{token}}
+
+### ---------- FIZETÉS – nyilvános végpontok (ezeket a Barion / a böngésző hívja) ----------
+
+### A Barion ezt hívja szerver-szerver módon (nálad ehhez publikusan elérhetőnek kell lenned)
+POST http://localhost:8080/api/payments/barion/callback?paymentId=00000000-0000-0000-0000-000000000000
+
+### A böngésző ide tér vissza fizetés után (RedirectUrl) – egyszerű "köszönjük" oldal
+GET http://localhost:8080/api/payments/barion/result?paymentId=00000000-0000-0000-0000-000000000000

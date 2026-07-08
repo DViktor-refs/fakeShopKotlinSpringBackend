@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: fakeShopKotlinSpringBackend
+
+  datasource:
+    # Helyi fejlesztéshez ezek az alapértékek. Railway-en a SPRING_DATASOURCE_URL,
+    # SPRING_DATASOURCE_USERNAME és SPRING_DATASOURCE_PASSWORD környezeti változókkal
+    # írhatók felül (lásd README).
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fakeshop}
+    username: ${SPRING_DATASOURCE_USERNAME:fakeshop}
+    password: ${SPRING_DATASOURCE_PASSWORD:fakeshop}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # A sémát a Flyway kezeli; a Hibernate csak ellenőrzi, hogy egyezik-e.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Egyedi beállítások a kezdeti adatbetöltéshez
+fakeshop:
+  seed:
+    enabled: ${SEED_ENABLED:true}
+    url: ${SEED_URL:https://dummyjson.com/products?limit=0}
+  jwt:
+    # ÉLESBEN állítsd be a JWT_SECRET környezeti változót (legalább 32 karakter)!
+    secret: ${JWT_SECRET:fakeshop-default-dev-secret-change-me-please-0123456789-abcdef-xyz}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  barion:
+    # Railway-en: POSKEY és PAYEE változók (lásd README).
+    pos-key: ${POSKEY:}
+    payee: ${PAYEE:}
+    # Sandbox alapból; élesben BARION_BASE_URL=https://api.barion.com
+    base-url: ${BARION_BASE_URL:https://api.test.barion.com}
+    currency: ${BARION_CURRENCY:HUF}
+    # A dollárban tárolt árak HUF-ra váltásához – tartsd szinkronban az Android app
+    # PriceFormatter.kt-jában lévő USD_TO_HUF értékkel!
+    usd-to-huf-rate: ${USD_TO_HUF_RATE:300.0}
+    # A backend publikus URL-je (Railway-en generált domain), séma nélkül NE add meg.
+    public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+    # Ha van külön frontend "köszönjük" oldal, ide állítsd; ha üres, a backend saját oldalát használja.
+    redirect-url: ${BARION_REDIRECT_URL:}
+  review-email:
+    # Ki-be kapcsoló az értékelő email funkcióhoz.
+    enabled: ${REVIEW_EMAIL_ENABLED:true}
+    # Mennyivel a fizetés UTÁN menjen az email. Rövid alak: 10s / 30m / 24h / 1d, vagy ISO-8601: PT24H.
+    # Teszthez pl. 10s, élesben 24h vagy 1d.
+    delay: ${REVIEW_EMAIL_DELAY:24h}
+    # A resend.com fiókodban ellenőrzött domain, vagy tesztre a Resend saját domainje.
+    from: ${REVIEW_EMAIL_FROM:onboarding@resend.dev}
+    # A Resend API kulcsa (resend.com -> API Keys). Ha üres, csak logol, nem küld valódit.
+    resend-api-key: ${RESEND_API_KEY:}
+    # Az email-linkekhez; ha üres, a PUBLIC_BASE_URL-t használja.
+    public-base-url: ${REVIEW_EMAIL_BASE_URL:}
+    # Milyen gyakran nézze az ütemező az esedékes emaileket (ms). Teszthez sűrűbb is lehet.
+    poll-interval-ms: ${REVIEW_EMAIL_POLL_MS:15000}
+
+logging:
+  level:
+    org.flywaydb: info

@@ -1,0 +1,17 @@
+# Helyi fejlesztéshez: elindít egy PostgreSQL adatbázist.
+# Indítás:  docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fakeshop-db
+    environment:
+      POSTGRES_DB: fakeshop
+      POSTGRES_USER: fakeshop
+      POSTGRES_PASSWORD: fakeshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - fakeshop_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fakeshop_pgdata:
